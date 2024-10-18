@@ -260,9 +260,9 @@ namespace ServiceBusExplorer.Controls
         private DateTime? messagesFilterToDate = default!;
         private DateTime? deadletterFilterFromDate = default!;
         private DateTime? deadletterFilterToDate = default!;
-        private SortableBindingList<ServiceBusMessage> messageBindingList = default!;
-        private SortableBindingList<ServiceBusMessage> deadletterBindingList = default!;
-        private SortableBindingList<ServiceBusMessage> transferDeadletterBindingList = default!;
+        private SortableBindingList<ServiceBusReceivedMessage> messageBindingList = default!;
+        private SortableBindingList<ServiceBusReceivedMessage> deadletterBindingList = default!;
+        private SortableBindingList<ServiceBusReceivedMessage> transferDeadletterBindingList = default!;
         private SortableBindingList<MessageSession> sessionBindingList = default!;
         private bool buttonsMoved;
         private readonly bool duplicateQueue;
@@ -1376,7 +1376,7 @@ namespace ServiceBusExplorer.Controls
                     int retrieved;
                     do
                     {
-                        var messages = messageReceiver.ReceiveBatch(all
+                        var messages = messageReceiver.ReceiveMessageAsync(all
                                 ? MainForm.SingletonMainForm.TopCount
                                 : count - totalRetrieved,
                             TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
@@ -1450,7 +1450,7 @@ namespace ServiceBusExplorer.Controls
         {
             try
             {
-                var ServiceBusMessages = new List<ServiceBusMessage>();
+                var ServiceBusMessages = new List<ServiceBusReceivedMessage>();
                 if (peek)
                 {
                     var messageReceiver = BuildMessageReceiver(ServiceBusReceiveMode.PeekLock, fromSession);
@@ -1472,8 +1472,7 @@ namespace ServiceBusExplorer.Controls
                         {
                             if (messageInspector != null)
                             {
-                                var test = new BrokeredMessage(message.Body);
-                                message = messageInspector.AfterReceiveMessage(new BrokeredMessage(message.Body));
+                                message = messageInspector.AfterReceiveMessage(message);
                             }
                             ServiceBusMessages.Add(message);
                         }
@@ -1488,8 +1487,8 @@ namespace ServiceBusExplorer.Controls
                     int retrieved;
                     do
                     {
-                        var message =
-                            messageReceiver.Receive(TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
+                        var message = await messageReceiver.ReceiveMessageAsync(
+                            TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
                         retrieved = message != null ? 1 : 0;
                         if (retrieved == 0)
                         {
@@ -1505,7 +1504,7 @@ namespace ServiceBusExplorer.Controls
                     } while (retrieved > 0 && (all || count > totalRetrieved));
                     writeToLog(string.Format(MessagesReceivedFromTheQueue, ServiceBusMessages.Count, queueProperties.Name));
                 }
-                messageBindingList = new SortableBindingList<ServiceBusMessage>(ServiceBusMessages)
+                messageBindingList = new SortableBindingList<ServiceBusReceivedMessage>(ServiceBusMessages)
                 {
                     AllowEdit = false,
                     AllowNew = false,
