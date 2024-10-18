@@ -31,9 +31,13 @@ namespace ServiceBusExplorer.ServiceBus.Helpers
 // ReSharper restore CheckNamespace
 {
     using Azure.Core;
+    using System;
+    using Azure.Identity;
 
     public class ServiceBusHelper2
     {
+        private const string AadScope = "https://management.core.windows.net";
+        private const string AuthorityHostUri = "https://login.microsoftonline.com/";
         readonly WriteToLogDelegate writeToLog;
 
         public string ConnectionString { get; set; }
@@ -50,6 +54,24 @@ namespace ServiceBusExplorer.ServiceBus.Helpers
         public ServiceBusHelper2(WriteToLogDelegate writeToLog)
         {
             this.writeToLog = writeToLog;
+        }
+
+        public InteractiveBrowserCredential GetTokenCredential(string tenantId)
+        {
+            var credentialOption = new InteractiveBrowserCredentialOptions()
+            {
+                TenantId = tenantId,
+                AuthorityHost = new Uri(AuthorityHostUri)
+            };
+
+            InteractiveBrowserCredential credential = new InteractiveBrowserCredential(credentialOption);
+            return credential;
+        }
+
+        public void Connect(string fqn, string tenantId)
+        {
+            var client = new ServiceBusClient(fqn, GetTokenCredential(tenantId));
+            
         }
 
         public bool ConnectionStringContainsEntityPath()

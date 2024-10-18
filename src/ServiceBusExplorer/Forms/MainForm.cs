@@ -54,6 +54,8 @@ using System.Windows.Forms;
 
 namespace ServiceBusExplorer.Forms
 {
+    using Azure.Core;
+
     public partial class MainForm : Form
     {
         #region Private Constants
@@ -473,6 +475,56 @@ namespace ServiceBusExplorer.Forms
                     panelMain.BackColor = SystemColors.Window;
 
                     await ShowEventGridEntities(EntityType.All);
+                }
+            }
+            catch (Exception ex)
+            {
+                HandleException(ex);
+            }
+        }
+
+        async void connectUsingEntraServiceBusToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (var connectForm = new ServiceBusEntraConnectForm())
+                {
+                    if (connectForm.ShowDialog() != DialogResult.OK)
+                    {
+                        UpdateSavedConnectionsMenu();
+                        return;
+                    }
+
+                    UpdateSavedConnectionsMenu();
+
+                    SelectedEntities = connectForm.SelectedEntities;
+                    NamespaceName = connectForm.NamespaceName;
+                    ResourceGroupName = connectForm.ResourceGroup;
+
+                    
+                    var serviceBusHelper2 = serviceBusHelper.GetServiceBusHelper2();
+                    serviceBusHelper2.GetTokenCredential(connectForm.CustomId).GetToken(new TokenRequestContext());
+                    // serviceBusHelper2.Connect(connectForm.NamespaceName,connectForm.CustomId);
+                    
+                    eventGridLibrary = new EventGridLibrary(
+                        connectForm.SubscriptionId,
+                        connectForm.ApiVersion,
+                        connectForm.RetryTimeout,
+                        connectForm.CustomId,
+                        WriteToLog);
+
+                    SetTitle(connectForm.NamespaceName, "Event Grid");
+                    panelTreeView.HeaderText = string.Format(NamespaceTypeFormat, "Event Grid");
+
+                    foreach (var userControl in panelMain.Controls.OfType<UserControl>())
+                    {
+                        userControl.Dispose();
+                    }
+
+                    panelMain.Controls.Clear();
+                    panelMain.BackColor = SystemColors.Window;
+
+                    // await ShowEventGridEntities(EntityType.All);
                 }
             }
             catch (Exception ex)
