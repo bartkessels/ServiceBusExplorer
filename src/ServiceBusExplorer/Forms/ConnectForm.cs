@@ -23,15 +23,15 @@
 
 #region Using Directives
 
+using Microsoft.ServiceBus;
+using Microsoft.ServiceBus.Messaging;
+using ServiceBusExplorer.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
-using ServiceBusExplorer.Helpers;
-using Microsoft.ServiceBus;
-using Microsoft.ServiceBus.Messaging;
 
 #endregion
 
@@ -377,9 +377,11 @@ namespace ServiceBusExplorer.Forms
             if (cboServiceBusNamespace.Text == EnterConnectionString ||
                 connectionStringType == ServiceBusNamespaceType.OnPremises || containsStsEndpoint)
             {
+                var newHeight = txtIssuerSecret.Location.Y + txtIssuerSecret.Size.Height - txtUri.Location.Y;
+
                 lblUri.Text = ConnectionStringLabel;
                 txtUri.Multiline = true;
-                txtUri.Size = new Size(336, 220);
+                txtUri.Size = new Size(txtUri.Size.Width, newHeight);
                 txtUri.Text = string.Empty;
                 toolTip.SetToolTip(txtUri, ConnectionStringTooltip);
             }
@@ -387,7 +389,7 @@ namespace ServiceBusExplorer.Forms
             {
                 lblUri.Text = UriLabel;
                 txtUri.Multiline = false;
-                txtUri.Size = new Size(336, 20);
+                txtUri.Size = new Size(txtUri.Size.Width, 20);
                 toolTip.SetToolTip(txtUri, UriTooltip);
             }
             if (cboServiceBusNamespace.SelectedIndex <= 1)
@@ -593,15 +595,19 @@ namespace ServiceBusExplorer.Forms
             {
                 var key = cboServiceBusNamespace.Text;
                 var isNewServiceBusNamespace = (key == EnterConnectionString);
+
                 ServiceBusConnectionStringBuilder serviceBusConnectionStringBuilder;
+
                 try
                 {
                     BuildCurrentConnectionString();
+
                     if (string.IsNullOrWhiteSpace(ConnectionString))
                     {
                         MainForm.StaticWriteToLog(ConnectionStringCannotBeNull);
                         return;
                     }
+
                     serviceBusConnectionStringBuilder = new ServiceBusConnectionStringBuilder(ConnectionString);
                 }
                 catch (Exception)
@@ -621,10 +627,10 @@ namespace ServiceBusExplorer.Forms
 
                 var index = host.IndexOf(".", StringComparison.Ordinal);
 
-
                 if (isNewServiceBusNamespace)
                 {
                     key = index > 0 ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(host.Substring(0, index)) : "MyNamespace";
+
                     using (var parameterForm = new ParameterForm("Enter the key for the Service Bus namespace",
                         new List<string> { "Key" },
                         new List<string> { key },
@@ -644,6 +650,7 @@ namespace ServiceBusExplorer.Forms
                     MainForm.StaticWriteToLog("The key of the Service Bus namespace cannot be null.");
                     return;
                 }
+
                 var value = ConnectionString;
 
                 try
@@ -663,6 +670,7 @@ namespace ServiceBusExplorer.Forms
                 }
 
                 serviceBusHelper.ServiceBusNamespaces[key] = ServiceBusNamespace.GetServiceBusNamespace(key, value, MainForm.StaticWriteToLog);
+
                 cboServiceBusNamespace.Items.Clear();
                 cboServiceBusNamespace.Items.Add(SelectServiceBusNamespace);
                 cboServiceBusNamespace.Items.Add(EnterConnectionString);

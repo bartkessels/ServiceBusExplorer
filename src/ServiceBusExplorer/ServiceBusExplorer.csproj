@@ -5,8 +5,9 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <ProjectGuid>{32754F39-E353-4607-94FE-B9B9ACFD58EF}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ForceDesignerDPIUnaware>true</ForceDesignerDPIUnaware>
 
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -69,6 +70,7 @@
     <PackageIcon>NewServiceBusExplorerLogo.jpg</PackageIcon>
     <RepositoryUrl>https://github.com/paolosalvatori/ServiceBusExplorer</RepositoryUrl>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FastColoredTextBox">
@@ -545,8 +547,9 @@
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Microsoft.Azure.NotificationHubs" Version="1.0.9" />
     <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="WindowsAzure.ServiceBus" Version="6.2.2" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="WindowsAzure.ServiceBus" Version="7.0.1" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Icons\Add.ico" />
@@ -641,6 +644,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\EventGridExplorerLibrary\EventGridExplorerLibrary.csproj" />
     <ProjectReference Include="..\EventHubs\EventHubs.csproj" />
     <ProjectReference Include="..\NotificationHubs\NotificationHubs.csproj" />
     <ProjectReference Include="..\Relay\Relay.csproj" />
