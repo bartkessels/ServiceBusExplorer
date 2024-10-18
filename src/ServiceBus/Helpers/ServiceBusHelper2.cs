@@ -30,6 +30,8 @@ using ServiceBusExplorer.Utilities.Helpers;
 namespace ServiceBusExplorer.ServiceBus.Helpers
 // ReSharper restore CheckNamespace
 {
+    using Azure.Core;
+
     public class ServiceBusHelper2
     {
         readonly WriteToLogDelegate writeToLog;
@@ -54,12 +56,7 @@ namespace ServiceBusExplorer.ServiceBus.Helpers
         {
             var connectionStringProperties = ServiceBusConnectionStringProperties.Parse(ConnectionString);
 
-            if (connectionStringProperties?.EntityPath != null)
-            {
-                return true;
-            }
-
-            return false;
+            return connectionStringProperties?.EntityPath != null;
         }
 
         /// <summary>
@@ -71,6 +68,11 @@ namespace ServiceBusExplorer.ServiceBus.Helpers
             return new ServiceBusClient(
                 ConnectionString,
                 new ServiceBusClientOptions { TransportType = this.TransportType });
+        }
+
+        public ServiceBusClient CreateServiceBusClient(string fullyQualifiedNamespace, TokenCredential credential)
+        {
+            return new ServiceBusClient(fullyQualifiedNamespace, credential);
         }
 
         public async Task<bool> IsPremiumNamespace()
