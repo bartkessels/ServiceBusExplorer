@@ -1332,7 +1332,7 @@ namespace ServiceBusExplorer.Controls
                 tabPageMessages.SuspendLayout();
 
                 Cursor.Current = Cursors.WaitCursor;
-                var ServiceBusMessages = new List<ServiceBusMessage>();
+                var ServiceBusMessages = new List<ServiceBusReceivedMessage>();
                 if (peek)
                 {
                     var totalRetrieved = 0;
@@ -1358,7 +1358,7 @@ namespace ServiceBusExplorer.Controls
                         var messageArray = messageEnumerable as ServiceBusReceivedMessage[] ?? messageEnumerable.ToArray();
                         var partialList = messageInspector != null
                             ? messageArray.Select(b => messageInspector.AfterReceiveMessage(b)).ToList()
-                            : new List<ServiceBusMessage>(messageArray);
+                            : new List<ServiceBusReceivedMessage>(messageArray);
                         ServiceBusMessages.AddRange(partialList);
                         totalRetrieved += partialList.Count;
                         if (partialList.Count == 0)
@@ -1376,7 +1376,7 @@ namespace ServiceBusExplorer.Controls
                     int retrieved;
                     do
                     {
-                        var messages = messageReceiver.ReceiveMessageAsync(all
+                        var messages = await messageReceiver.ReceiveMessageAsync(all
                                 ? MainForm.SingletonMainForm.TopCount
                                 : count - totalRetrieved,
                             TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
