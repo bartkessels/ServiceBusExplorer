@@ -17,9 +17,13 @@ namespace ServiceBusExplorer
     public class QueueClient
     {
         private readonly ServiceBusClient _serviceBusClient;
-        public QueueClient(ServiceBusClient serviceBusClient)
+        private readonly string _path;
+        private readonly ServiceBusReceiveMode _serviceBusReceiveMode;
+        public QueueClient(ServiceBusClient serviceBusClient, string path, ServiceBusReceiveMode serviceBusReceiveMode)
         {
             _serviceBusClient = serviceBusClient;
+            _path = path;
+            _serviceBusReceiveMode = serviceBusReceiveMode;
         }
     }
 }
