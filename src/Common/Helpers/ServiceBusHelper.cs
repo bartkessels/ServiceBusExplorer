@@ -52,6 +52,7 @@ namespace ServiceBusExplorer
     using System.IO.Compression;
     using Abstractions;
     using Azure.Identity;
+    using Azure.Messaging.ServiceBus;
     using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
     using ServiceBusConnectionStringBuilder = Microsoft.ServiceBus.ServiceBusConnectionStringBuilder;
@@ -5209,9 +5210,8 @@ namespace ServiceBusExplorer
         public void ReceiveMessages(EntityDescription entityDescription, int? messageCount, bool complete, bool deadletterQueue, TimeSpan receiveTimeout, TimeSpan sessionTimeout)
         {
             // ReSharper disable once CollectionNeverQueried.Local
-            var receiverList = new List<MessageReceiver>();
-            if (brokeredMessageList != null &&
-                brokeredMessageList.Count > 0)
+            var receiverList = new List<ServiceBusReceiver>();
+            if (brokeredMessageList is { Count: > 0 })
             {
                 brokeredMessageList.ForEach(b => b.Dispose());
             }
@@ -5248,7 +5248,7 @@ namespace ServiceBusExplorer
             var encoderFactory = element.CreateMessageEncoderFactory();
             var encoder = encoderFactory.Encoder;
 
-            MessageReceiver messageReceiver = null;
+            ServiceBusReceiver messageReceiver = null;
             var description = entityDescription as QueueDescription;
             if (description != null)
             {
@@ -5256,7 +5256,7 @@ namespace ServiceBusExplorer
                 if (deadletterQueue)
                 {
                     messageReceiver = messagingFactory.CreateMessageReceiver(QueueClient.FormatDeadLetterPath(queueDescription.Path),
-                                                                             ReceiveMode.PeekLock);
+                                                                             ServiceBusReceiveMode.PeekLock);
                 }
                 else
                 {
@@ -5269,14 +5269,13 @@ namespace ServiceBusExplorer
                     else
                     {
                         messageReceiver = messagingFactory.CreateMessageReceiver(queueDescription.Path,
-                                                                                 ReceiveMode.PeekLock);
+                                                                                 ServiceBusReceiveMode.PeekLock);
                     }
                 }
             }
             else
             {
-                var description1 = entityDescription as SubscriptionDescription;
-                if (description1 != null)
+                if (entityDescription is SubscriptionDescription description1)
                 {
                     var subscriptionDescription = description1;
                     if (deadletterQueue)
