@@ -715,6 +715,63 @@ namespace ServiceBusExplorer
             WriteToLogIf(traceEnabled, MessageFactorySuccessfullyCreated);
             return factory;
         }
+        
+        
+        /// <summary>
+        /// Connects the ServiceBusHelper object to service bus namespace contained in the ServiceBusNamespaces dictionary.
+        /// </summary>
+        /// <param name="serviceBusNamespace">The Service Bus namespace.</param>
+        /// <returns>True if the operation succeeds, false otherwise.</returns>
+        public bool Connect(string fqn, string tenantId)
+        {
+            var func = (() =>
+            {
+                // The NamespaceManager class can be used for managing entities,
+                // such as queues, topics, subscriptions, and rules, in your service namespace.
+                // You must provide service namespace address and access credentials in order
+                // to manage your service namespace.
+                namespaceManager = Microsoft.ServiceBus.NamespaceManager.CreateFromConnectionString(ConnectionStringWithoutEntityPath);
+
+                // Set retry count
+                if (namespaceManager.Settings.RetryPolicy is Microsoft.ServiceBus.RetryExponential defaultServiceBusRetryExponential)
+                {
+                    namespaceManager.Settings.RetryPolicy = new Microsoft.ServiceBus.RetryExponential(defaultServiceBusRetryExponential.MinimalBackoff,
+                                                                                            defaultServiceBusRetryExponential.MaximumBackoff,
+                                                                                            RetryHelper.RetryCount);
+                }
+
+                try
+                {
+                    notificationHubNamespaceManager = AzureNotificationHubs.NamespaceManager.CreateFromConnectionString(serviceBusNamespace.ConnectionStringWithoutTransportType);
+
+                    // Set retry count
+                    if (notificationHubNamespaceManager.Settings.RetryPolicy is AzureNotificationHubs.RetryExponential defaultNotificationHubsRetryExponential)
+                    {
+                        notificationHubNamespaceManager.Settings.RetryPolicy = new AzureNotificationHubs.RetryExponential(defaultNotificationHubsRetryExponential.MinimalBackoff,
+                                                                                                                     defaultNotificationHubsRetryExponential.MaximumBackoff,
+                                                                                                                     defaultNotificationHubsRetryExponential.DeltaBackoff,
+                                                                                                                     defaultNotificationHubsRetryExponential.TerminationTimeBuffer,
+                                                                                                                     RetryHelper.RetryCount);
+                    }
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+                WriteToLogIf(traceEnabled, string.Format(CultureInfo.CurrentCulture, ServiceBusIsConnected, namespaceManager.Address.AbsoluteUri));
+                namespaceUri = namespaceManager.Address;
+                connectionStringType = serviceBusNamespace.ConnectionStringType;
+                ns = IsCloudNamespace ? namespaceUri.Host.Split('.')[0] : namespaceUri.Segments[namespaceUri.Segments.Length - 1];
+                atomFeedUri = new Uri($"{Uri.UriSchemeHttp}://{namespaceUri.Host}");
+
+                // As the name suggests, the MessagingFactory class is a Factory class that allows to create
+                // instances of the QueueClient, TopicClient and SubscriptionClient classes.
+                MessagingFactory = MessagingFactory.CreateFromConnectionString(ConnectionStringWithoutEntityPath);
+                WriteToLogIf(traceEnabled, MessageFactorySuccessfullyCreated);
+                return true;
+            });
+            return RetryHelper.RetryFunc(func, writeToLog);
+        }
 
         /// <summary>
         /// Connects the ServiceBusHelper object to service bus namespace contained in the ServiceBusNamespaces dictionary.
