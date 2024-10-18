@@ -37,9 +37,6 @@ using System.Xml;
 
 using Azure.Messaging.ServiceBus.Administration;
 
-using Microsoft.ServiceBus;
-using Microsoft.ServiceBus.Messaging;
-
 using ServiceBusExplorer.Enums;
 using ServiceBusExplorer.Helpers;
 using ServiceBusExplorer.ServiceBus.Helpers;
@@ -54,6 +51,9 @@ namespace ServiceBusExplorer
 {
     using System.IO.Compression;
     using Abstractions;
+    using Azure.Identity;
+    using Microsoft.ServiceBus;
+    using Microsoft.ServiceBus.Messaging;
     using ServiceBusConnectionStringBuilder = Microsoft.ServiceBus.ServiceBusConnectionStringBuilder;
 
     public enum BodyType
@@ -182,7 +182,7 @@ namespace ServiceBusExplorer
         private Type messageDeferProviderType = typeof(InMemoryMessageDeferProvider);
         private Microsoft.ServiceBus.NamespaceManager namespaceManager;
         private AzureNotificationHubs.NamespaceManager notificationHubNamespaceManager;
-        private MessagingFactory messagingFactory;
+        private ServiceBusExplorer.MessagingFactory messagingFactory;
         private bool traceEnabled;
         private string scheme = DefaultScheme;
         private Microsoft.ServiceBus.TokenProvider tokenProvider;
@@ -586,17 +586,17 @@ namespace ServiceBusExplorer
         /// <summary>
         /// Gets or sets the MessagingFactory
         /// </summary>
-        public MessagingFactory MessagingFactory
+        public ServiceBusExplorer.MessagingFactory MessagingFactory
         {
             get
             {
-                lock (this)
+                lock(this)
                 {
-                    if (messagingFactory == null ||
-                        messagingFactory.IsClosed)
+                    if (messagingFactory == null) 
                     {
-                        messagingFactory = CreateMessagingFactory();
+                        messagingFactory = new MessagingFactory();
                     }
+
                     return messagingFactory;
                 }
             }

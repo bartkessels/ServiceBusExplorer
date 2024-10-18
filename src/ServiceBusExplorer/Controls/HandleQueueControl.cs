@@ -1558,7 +1558,8 @@ namespace ServiceBusExplorer.Controls
                 var queuePath = QueueClient.FormatDeadLetterPath(queueProperties.Name);
                 if (peek)
                 {
-                    var queueClient = serviceBusHelper.MessagingFactory.CreateQueueClient(queuePath, ServiceBusReceiveMode.PeekLock);
+                    
+                    var queueClient = serviceBusHelper.MessagingFactory.CreateQueueClient(queuePath, ReceiveMode.PeekLock);
                     var totalRetrieved = 0;
                     var retrieved = 0;
                     do
@@ -1680,7 +1681,7 @@ namespace ServiceBusExplorer.Controls
             }
         }
 
-        private void GetTransferDeadletterMessages(bool peek, bool all, int count, IBrokeredMessageInspector? messageInspector, long? fromSequenceNumber)
+        private async void GetTransferDeadletterMessages(bool peek, bool all, int count, IBrokeredMessageInspector? messageInspector, long? fromSequenceNumber)
         {
             try
             {
@@ -1695,22 +1696,22 @@ namespace ServiceBusExplorer.Controls
                 var queuePath = QueueClient.FormatTransferDeadLetterPath(queueProperties.Name);
                 if (peek)
                 {
-                    var queueClient = serviceBusHelper.MessagingFactory.CreateQueueClient(queuePath, ServiceBusReceiveMode.PeekLock);
+                    var queueClient = serviceBusHelper.MessagingFactory.CreateQueueClient(queuePath, ReceiveMode.PeekLock);
                     var totalRetrieved = 0;
                     var retrieved = 0;
                     do
                     {
-                        IEnumerable<ServiceBusMessage> messages;
+                        IEnumerable<BrokeredMessage> messages;
 
                         if (retrieved == 0 && fromSequenceNumber.HasValue)
                         {
-                            messages = queueClient.PeekBatch(fromSequenceNumber.Value, all
+                            messages = await queueClient.PeekBatchAsync(fromSequenceNumber.Value, all
                                 ? MainForm.SingletonMainForm.TopCount
                                 : count - totalRetrieved);
                         }
                         else
                         {
-                            messages = queueClient.PeekBatch(all
+                            messages = await queueClient.PeekBatchAsync(all
                                 ? MainForm.SingletonMainForm.TopCount
                                 : count - totalRetrieved);
                         }
