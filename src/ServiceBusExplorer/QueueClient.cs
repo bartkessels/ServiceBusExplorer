@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ServiceBusExplorer
 {
-    internal class QueueClient
+    public class QueueClient
     {
     }
 }

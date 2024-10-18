@@ -2,9 +2,9 @@
 {
     public class MessagingFactory
     {
-        public void CreateQueueClient()
+        public QueueClient CreateQueueClient()
         {
-            
+            return new QueueClient();
         }
     }
 }
