@@ -1376,11 +1376,11 @@ namespace ServiceBusExplorer.Controls
                     int retrieved;
                     do
                     {
-                        var messages = await messageReceiver.ReceiveMessageAsync(all
+                        var messages = await messageReceiver.ReceiveMessagesAsync(all
                                 ? MainForm.SingletonMainForm.TopCount
                                 : count - totalRetrieved,
                             TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
-                        var enumerable = messages as ServiceBusMessage[] ?? messages.ToArray();
+                        var enumerable = messages.ToArray();
                         retrieved = enumerable.Length;
                         if (retrieved == 0)
                         {
@@ -1393,7 +1393,7 @@ namespace ServiceBusExplorer.Controls
                     } while (retrieved > 0 && (all || count > totalRetrieved));
                     writeToLog(string.Format(MessagesReceivedFromTheQueue, ServiceBusMessages.Count, queueProperties.Name));
                 }
-                messageBindingList = new SortableBindingList<ServiceBusMessage>(ServiceBusMessages)
+                messageBindingList = new SortableBindingList<ServiceBusReceivedMessage>(ServiceBusMessages)
                 {
                     AllowEdit = false,
                     AllowNew = false,
@@ -1430,7 +1430,7 @@ namespace ServiceBusExplorer.Controls
             }
             catch (NotSupportedException)
             {
-                ReadMessagesOneAtTheTime(peek, all, count, messageInspector, fromSequenceNumber);
+                await ReadMessagesOneAtTheTime(peek, all, count, messageInspector, fromSequenceNumber);
             }
             catch (Exception ex)
             {
@@ -1543,7 +1543,7 @@ namespace ServiceBusExplorer.Controls
             }
         }
 
-        private void GetDeadletterMessages(bool peek, bool all, int count, IBrokeredMessageInspector? messageInspector, long? fromSequenceNumber)
+        private async void GetDeadletterMessages(bool peek, bool all, int count, IBrokeredMessageInspector? messageInspector, long? fromSequenceNumber)
         {
             try
             {
@@ -1553,7 +1553,7 @@ namespace ServiceBusExplorer.Controls
                 tabPageDeadletter.SuspendLayout();
 
                 Cursor.Current = Cursors.WaitCursor;
-                var ServiceBusMessages = new List<ServiceBusMessage>();
+                var ServiceBusMessages = new List<ServiceBusReceivedMessage>();
 
                 var queuePath = QueueClient.FormatDeadLetterPath(queueProperties.Name);
                 if (peek)
@@ -1563,23 +1563,23 @@ namespace ServiceBusExplorer.Controls
                     var retrieved = 0;
                     do
                     {
-                        IEnumerable<ServiceBusMessage> messages;
+                        IEnumerable<BrokeredMessage> messages;
 
                         if (retrieved == 0 && fromSequenceNumber.HasValue)
                         {
-                            messages = queueClient.PeekBatch(fromSequenceNumber.Value, all
+                            messages = await queueClient.PeekBatchAsync(fromSequenceNumber.Value, all
                                 ? MainForm.SingletonMainForm.TopCount
                                 : count - totalRetrieved);
                         }
                         else
                         {
-                            messages = queueClient.PeekBatch(all
+                            messages = await queueClient.PeekBatchAsync(all
                                 ? MainForm.SingletonMainForm.TopCount
                                 : count - totalRetrieved);
                         }
 
-                        var enumerable = messages as ServiceBusMessage[] ?? messages.ToArray();
-                        retrieved = enumerable.Length;
+                        var enumerable = messages.Select(m => new BrokeredMessage(m.GetBodyStream())).ToList();
+                        retrieved = enumerable.Count;
                         if (retrieved == 0)
                         {
                             continue;
@@ -1593,17 +1593,17 @@ namespace ServiceBusExplorer.Controls
                 }
                 else
                 {
-                    var queueClient = serviceBusHelper.MessagingFactory.CreateQueueClient(queuePath, ServiceBusReceiveMode.ReceiveAndDelete);
+                    var queueClient = serviceBusHelper.MessagingFactory.CreateQueueClient(queuePath, ReceiveMode.ReceiveAndDelete);
                     var totalRetrieved = 0;
                     int retrieved;
                     do
                     {
-                        var messages = queueClient.ReceiveBatch(all
+                        var messages = await queueClient.ReceiveBatchAsync(all
                                 ? MainForm.SingletonMainForm.TopCount
                                 : count - totalRetrieved,
                             TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
-                        var enumerable = messages as ServiceBusMessage[] ?? messages.ToArray();
-                        retrieved = enumerable.Length;
+                        var enumerable = messages.Select(m => new BrokeredMessage(m.GetBodyStream())).ToList();
+                        retrieved = enumerable.Count;
                         if (retrieved == 0)
                         {
                             continue;
@@ -1629,7 +1629,7 @@ namespace ServiceBusExplorer.Controls
                     writeToLog(string.Format(MessagesReceivedFromTheDeadletterQueue, ServiceBusMessages.Count, queueProperties.Name));
                 }
 
-                deadletterBindingList = new SortableBindingList<ServiceBusMessage>(ServiceBusMessages)
+                deadletterBindingList = new SortableBindingList<ServiceBusReceivedMessage>(ServiceBusMessages)
                 {
                     AllowEdit = false,
                     AllowNew = false,
