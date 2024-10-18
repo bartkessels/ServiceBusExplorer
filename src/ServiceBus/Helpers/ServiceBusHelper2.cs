@@ -92,9 +92,14 @@ namespace ServiceBusExplorer.ServiceBus.Helpers
                 new ServiceBusClientOptions { TransportType = this.TransportType });
         }
 
-        public ServiceBusClient CreateServiceBusClient(string fullyQualifiedNamespace, TokenCredential credential)
+        public ServiceBusClient CreateServiceBusClient(string fqns, TokenCredential credential)
         {
-            return new ServiceBusClient(fullyQualifiedNamespace, credential);
+            return new ServiceBusClient(fqns, credential);
+        }
+
+        public ServiceBusAdministrationClient CreateServiceBusAdministrationClient(string fqns, TokenCredential credential)
+        {
+            return new ServiceBusAdministrationClient(fqns, credential);
         }
 
         public async Task<bool> IsPremiumNamespace()

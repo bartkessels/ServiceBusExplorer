@@ -524,6 +524,8 @@ namespace ServiceBusExplorer.Forms
                     panelMain.Controls.Clear();
                     panelMain.BackColor = SystemColors.Window;
 
+                    await ShowEntities(EntityType.Queue);
+
                     // await ShowEventGridEntities(EntityType.All);
                 }
             }
