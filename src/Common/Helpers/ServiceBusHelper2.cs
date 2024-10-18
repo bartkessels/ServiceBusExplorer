@@ -237,7 +237,7 @@ namespace ServiceBusExplorer.ServiceBus.Helpers
             MessageDeferProviderType = serviceBusHelper.MessageDeferProviderType;
             Scheme = serviceBusHelper.Scheme;
             ServiceBusNamespaces = serviceBusHelper.ServiceBusNamespaces;
-            ReceivedMessageInspectors = new ReceivedMessageInspector();
+            ReceivedMessageInspectors = serviceBusHelper.ReceivedMessageInspectors;
             EventDataInspectors = serviceBusHelper.EventDataInspectors;
             BrokeredMessageGenerators = serviceBusHelper.BrokeredMessageGenerators;
             EventDataGenerators = serviceBusHelper.EventDataGenerators;

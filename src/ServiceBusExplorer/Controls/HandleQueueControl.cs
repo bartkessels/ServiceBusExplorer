@@ -1446,7 +1446,7 @@ namespace ServiceBusExplorer.Controls
             }
         }
 
-        private void ReadMessagesOneAtTheTime(bool peek, bool all, int count, IBrokeredMessageInspector? messageInspector, long? fromSequenceNumber = null, string? fromSession = null)
+        private async Task ReadMessagesOneAtTheTime(bool peek, bool all, int count, IBrokeredMessageInspector? messageInspector, long? fromSequenceNumber = null, string? fromSession = null)
         {
             try
             {
@@ -1457,22 +1457,23 @@ namespace ServiceBusExplorer.Controls
 
                     for (var i = 0; i < count; i++)
                     {
-                        ServiceBusMessage message;
+                        ServiceBusReceivedMessage message;
 
                         if (i == 0 && fromSequenceNumber.HasValue)
                         {
-                            message = messageReceiver.Peek(fromSequenceNumber.Value);
+                            message = await messageReceiver.PeekMessageAsync(fromSequenceNumber.Value);
                         }
                         else
                         {
-                            message = messageReceiver.Peek();
+                            message = await messageReceiver.PeekMessageAsync();
                         }
 
                         if (message != null)
                         {
                             if (messageInspector != null)
                             {
-                                message = messageInspector.AfterReceiveMessage(message);
+                                var test = new BrokeredMessage(message.Body);
+                                message = messageInspector.AfterReceiveMessage(new BrokeredMessage(message.Body));
                             }
                             ServiceBusMessages.Add(message);
                         }
@@ -3642,11 +3643,11 @@ namespace ServiceBusExplorer.Controls
 
         private static bool IsWithinDateTimeRange(ServiceBusMessage message, DateTime? fromDateTime, DateTime? toDateTime)
         {
-            if (message.EnqueuedTimeUtc < (fromDateTime ?? DateTime.MinValue))
+            if (message.ScheduledEnqueueTime.UtcDateTime < (fromDateTime ?? DateTime.MinValue))
             {
                 return false;
             }
-            if (message.EnqueuedTimeUtc > (toDateTime ?? DateTime.MaxValue))
+            if (message.ScheduledEnqueueTime.UtcDateTime > (toDateTime ?? DateTime.MaxValue))
             {
                 return false;
             }
